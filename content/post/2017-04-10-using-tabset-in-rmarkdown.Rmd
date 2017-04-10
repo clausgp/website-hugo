@@ -1,0 +1,39 @@
+---
+title: Using tabset in rmarkdown
+author: Claus Gaarde Pedersen
+date: '2017-04-10'
+slug: using-tabset-in-rmarkdown
+categories: []
+tags:
+  - R
+  - tabset
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, warning=FALSE)
+```
+
+With Rmarkdown i like to use the [tabset](http://rmarkdown.rstudio.com/html_document_format.html#tabbed_sections) facility. It lets you break down your analysis in easy navigateable sections, much nicer than a boring "table of contents".  
+But alas it is not built into blogdown yet, and maybe it will not be so easy to implement, because you have to mess with css, and that dosnt go so well with Hugo that expects a single css for the whole site.  
+Nevertheless i have opened an [issue](https://github.com/rstudio/blogdown/issues/69) at the github site for blogdown. Maybe Yihue will do some magic and find a solution.  
+Below is a simple example, where Map and Code should be on each there own tab. If it suddenly works the issue must be fixed :-)    
+
+# Leaflet-test {.tabset}
+
+## Map
+
+```{r ref.label="code", echo=FALSE}
+
+```
+
+## Code
+
+```{r code, eval=FALSE}
+library(leaflet)
+leaflet() %>% addTiles()
+```
+
+There is another solution but its not pretty and that is to use the hint suggested by moorereason here :  
+<https://discuss.gohugo.io/t/how-to-include-file-with-html-in-a-post-written-in-markdown/3410>
+
+You have to make some hacks using Hugo shortcodes and working with partial templates. I have used it for some of the Data Projects, but not really what i want to use everytime.  

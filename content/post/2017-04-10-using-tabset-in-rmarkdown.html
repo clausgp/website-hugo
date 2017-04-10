@@ -1,0 +1,42 @@
+---
+title: Using tabset in rmarkdown
+author: Claus Gaarde Pedersen
+date: '2017-04-10'
+slug: using-tabset-in-rmarkdown
+categories: []
+tags:
+  - R
+  - tabset
+---
+
+<script src="/rmarkdown-libs/htmlwidgets/htmlwidgets.js"></script>
+<script src="/rmarkdown-libs/jquery/jquery.min.js"></script>
+<link href="/rmarkdown-libs/leaflet/leaflet.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/leaflet/leaflet.js"></script>
+<link href="/rmarkdown-libs/leafletfix/leafletfix.css" rel="stylesheet" />
+<link href="/rmarkdown-libs/leaflet-label/leaflet.label.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/leaflet-label/leaflet.label.js"></script>
+<script src="/rmarkdown-libs/Proj4Leaflet/proj4-compressed.js"></script>
+<script src="/rmarkdown-libs/Proj4Leaflet/proj4leaflet.js"></script>
+<script src="/rmarkdown-libs/leaflet-binding/leaflet.js"></script>
+
+<p>With Rmarkdown i like to use the <a href="http://rmarkdown.rstudio.com/html_document_format.html#tabbed_sections">tabset</a> facility. It lets you break down your analysis in easy navigateable sections, much nicer than a boring “table of contents”.<br />
+But alas it is not built into blogdown yet, and maybe it will not be so easy to implement, because you have to mess with css, and that dosnt go so well with Hugo that expects a single css for the whole site.<br />
+Nevertheless i have opened an <a href="https://github.com/rstudio/blogdown/issues/69">issue</a> at the github site for blogdown. Maybe Yihue will do some magic and find a solution.<br />
+Below is a simple example, where Map and Code should be on each there own tab. If it suddenly works the issue must be fixed :-)</p>
+<div id="leaflet-test" class="section level1 tabset">
+<h1>Leaflet-test</h1>
+<div id="map" class="section level2">
+<h2>Map</h2>
+<div id="htmlwidget-e6d57c82dd6047c2b440" style="width:672px;height:480px;" class="leaflet html-widget"></div>
+<script type="application/json" data-for="htmlwidget-e6d57c82dd6047c2b440">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addTiles","args":["//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",null,null,{"minZoom":0,"maxZoom":18,"maxNativeZoom":null,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"continuousWorld":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":null,"unloadInvisibleTiles":null,"updateWhenIdle":null,"detectRetina":false,"reuseTiles":false,"attribution":"&copy; <a href=\"http://openstreetmap.org\">OpenStreetMap<\/a> contributors, <a href=\"http://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA<\/a>"}]}]},"evals":[],"jsHooks":[]}</script>
+</div>
+<div id="code" class="section level2">
+<h2>Code</h2>
+<pre class="r"><code>library(leaflet)
+leaflet() %&gt;% addTiles()</code></pre>
+<p>There is another solution but its not pretty and that is to use the hint suggested by moorereason here :<br />
+<a href="https://discuss.gohugo.io/t/how-to-include-file-with-html-in-a-post-written-in-markdown/3410" class="uri">https://discuss.gohugo.io/t/how-to-include-file-with-html-in-a-post-written-in-markdown/3410</a></p>
+<p>You have to make some hacks using Hugo shortcodes and working with partial templates. I have used it for some of the Data Projects, but not really what i want to use everytime.</p>
+</div>
+</div>

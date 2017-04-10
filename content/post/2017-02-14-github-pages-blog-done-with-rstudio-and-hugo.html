@@ -1,0 +1,37 @@
+---
+title: New website
+author: Claus Gaarde Pedersen
+date: '2017-02-14'
+tags:
+    - R
+    - github
+    - hugo
+description: 'First post'
+draft: no
+---
+
+<script src="/rmarkdown-libs/htmlwidgets/htmlwidgets.js"></script>
+<script src="/rmarkdown-libs/jquery/jquery.min.js"></script>
+<link href="/rmarkdown-libs/leaflet/leaflet.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/leaflet/leaflet.js"></script>
+<link href="/rmarkdown-libs/leafletfix/leafletfix.css" rel="stylesheet" />
+<link href="/rmarkdown-libs/leaflet-label/leaflet.label.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/leaflet-label/leaflet.label.js"></script>
+<script src="/rmarkdown-libs/Proj4Leaflet/proj4-compressed.js"></script>
+<script src="/rmarkdown-libs/Proj4Leaflet/proj4leaflet.js"></script>
+<script src="/rmarkdown-libs/leaflet-binding/leaflet.js"></script>
+
+<p>Welcome to this new website using Rstudio/blogdown and Hugo hosting on Github.</p>
+<p>Actually its my first time ever making my own website.<br />
+With more than 20 year experience in the it-business, maybe you would have expected that to have happened sooner.</p>
+<p>Reading up on this new thing about making a static webpage through rstudio with blogdown and Hugo caught my interest.<br />
+Finally i have spent the time needed to set a website up. Because this seems to be a good avenue to show the things that can be made through Rmarkdowns.</p>
+<p>I think Rmarkdown documents are really awesome. Especially rendered as htmls because that way you can do you your data analysis and at the same time use all the nice javascript libraries to show off interactive data. <a href="http://www.htmlwidgets.org/index.html">Look here</a></p>
+<p>Working on setting this up i used these sites :</p>
+<p><a href="http://robertmyles.github.io/2017/02/01/how-to-make-a-github-pages-blog-with-rstudio-and-hugo/" class="uri">http://robertmyles.github.io/2017/02/01/how-to-make-a-github-pages-blog-with-rstudio-and-hugo/</a> <a href="https://proquestionasker.github.io/blog/Making_Site/" class="uri">https://proquestionasker.github.io/blog/Making_Site/</a></p>
+<p>Finally something abit interactive</p>
+<pre class="r"><code>library(leaflet)
+leaflet() %&gt;% addTiles() %&gt;% addMarkers(lng=10.449, lat=55.371, popup=&quot;Hello world&quot;,
+                                        label=&quot;dont click me&quot;)</code></pre>
+<div id="htmlwidget-dcee79bd417bb88411a1" style="width:672px;height:480px;" class="leaflet html-widget"></div>
+<script type="application/json" data-for="htmlwidget-dcee79bd417bb88411a1">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addTiles","args":["//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",null,null,{"minZoom":0,"maxZoom":18,"maxNativeZoom":null,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"continuousWorld":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":null,"unloadInvisibleTiles":null,"updateWhenIdle":null,"detectRetina":false,"reuseTiles":false,"attribution":"&copy; <a href=\"http://openstreetmap.org\">OpenStreetMap<\/a> contributors, <a href=\"http://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA<\/a>"}]},{"method":"addMarkers","args":[55.371,10.449,null,null,null,{"clickable":true,"draggable":false,"keyboard":true,"title":"","alt":"","zIndexOffset":0,"opacity":1,"riseOnHover":false,"riseOffset":250},"Hello world",null,null,null,"dont click me",null,null]}],"limits":{"lat":[55.371,55.371],"lng":[10.449,10.449]}},"evals":[],"jsHooks":[]}</script>

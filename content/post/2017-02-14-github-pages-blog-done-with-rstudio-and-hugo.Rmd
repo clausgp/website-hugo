@@ -1,0 +1,40 @@
+---
+title: New website
+author: Claus Gaarde Pedersen
+date: '2017-02-14'
+tags:
+    - R
+    - github
+    - hugo
+description: 'First post'
+draft: no
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, warning=FALSE)
+```
+
+Welcome to this new website using Rstudio/blogdown and Hugo hosting on Github.  
+
+Actually its my first time ever making my own website.  
+With more than 20 year experience in the it-business, maybe you would have expected that
+to have happened sooner.  
+
+Reading up on this new thing about making a static webpage through rstudio with blogdown and Hugo caught my interest.  
+Finally i have spent the time needed to set a website up. Because this seems to be a good avenue to show the things that can be made through Rmarkdowns.  
+
+I think Rmarkdown documents are really awesome. Especially rendered as htmls because that way you can do you your data analysis and at the same time use all the nice javascript libraries to show off interactive data. [Look here](http://www.htmlwidgets.org/index.html)  
+
+Working on setting this up i used these sites :
+
+<http://robertmyles.github.io/2017/02/01/how-to-make-a-github-pages-blog-with-rstudio-and-hugo/>
+<https://proquestionasker.github.io/blog/Making_Site/>
+
+Finally something abit interactive
+
+```{r}
+library(leaflet)
+leaflet() %>% addTiles() %>% addMarkers(lng=10.449, lat=55.371, popup="Hello world",
+                                        label="dont click me")
+```
+
