@@ -1,0 +1,170 @@
+---
+title: The mountains of Denmark
+author: Claus Gaarde Pedersen
+date: "29 apr 2017"
+slug: poplines
+categories: []
+summary: Population density shown as wiggly lines
+tags:
+  - R
+  - Population lines
+header:
+  image: "headers/poplines.PNG"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, fig.width=9)
+library(tidyverse)
+library(ggthemes)
+```
+
+```{r ref.label="revo", echo=FALSE}
+```
+
+```{r ref.label="spatly", echo=FALSE}
+```
+
+## Showing population density as population lines
+
+There are no mountains in Denmark! In fact the highest point is a hill at 170 meters. We try to compensate for our diminutive stature by giving our hills impressive names like 'The sky mountain'. But now with a little help from population data and abit of imagery we can create the impression that there is mountainious peaks in Denmark.  
+
+The idea is not mine, but gleefully ~~copied~~ inspired from http://blog.revolutionanalytics.com/2017/04/where-europe-lives.html and http://spatial.ly/2017/04/population-lines-how-and-why-i-created-it/.
+
+Here is the code from the first blog. I have made some changes mostly just to create a function so its easier to experiment with.
+
+```{r ref.label="revo", eval=FALSE}
+```
+
+Using the code to make a population plot of Denmark
+
+```{r ref.label="revoplot"}
+```
+
+I dont like how the spikes draw over the lines 'behind' them. That brings us to the other site, which has a better solution. Its not as simple  and the plot has to be generated iteratively.
+
+```{r ref.label="spatly", eval=FALSE}
+```
+
+I experimented abit to see if the code could be done differently, but didnt find a good solution. I made the change to use geom_ribbon instead of geom_polygon, which avoids some artifacts in the plot when the borders/coastlines are spikes, but the plot is still generated iteratively. I guess if ggplot allowed for 2 different colors in geom_ribbon one for top line-color and the other for bottem line-color it would solve most of the troubles.  
+
+This code is also adjusted, mostly by creating a function.  
+This funcion is used to make a new plot of Denmark (also shown in the header of this post) :
+
+```{r ref.label="dk"}
+```
+
+I think this is visually more pleasing, than the first plot.  
+
+To make population plots on your own, you can use plot_poplines, with your favorite country and experiment with the parameters or you can adjust the code to make further enhancements. Also by running the code yourself you can see the plot in bigger size than the formatting of rmarkdown allows for.  
+
+Lets make a plot of Europe
+
+```{r ref.label="eu"}
+```
+
+Plot of United Kingdom
+
+```{r ref.label="uk"}
+```
+
+Plot of Germany
+
+```{r ref.label="de"}
+```
+
+Codes for the european countries are here `r unique(pop$CNTR_CODE)`
+
+```{r revo, eval=FALSE, echo=FALSE}
+# code copied from http://blog.revolutionanalytics.com/2017/04/where-europe-lives.html with my merciless tweaks
+
+# data from http://ec.europa.eu/eurostat/web/gisco/geodata/reference-data/population-distribution-demography/geostat
+# Originally seen at http://spatial.ly/2014/08/population-lines/
+
+# So, this blew up on both Reddit and Twitter. Two bugs fixed (southern Spain was a mess,
+# and some countries where missing -- measure twice, submit once, damnit), and two silly superflous lines removed after
+# @hadleywickham pointed that out. Also, switched from geom_segment to geom_line.
+
+# The result of the code below can be seen at http://imgur.com/ob8c8ph
+
+pop <- read_csv('poplines/GEOSTAT_grid_POP_1K_2011_V2_0_1.csv') %>%
+  rbind(read_csv('poplines/JRC-GHSL_AIT-grid-POP_1K_2011.csv') %>%
+          mutate(TOT_P_CON_DT='')) %>%
+  mutate(lat = as.numeric(gsub('.*N([0-9]+)[EW].*', '\\1', GRD_ID))/100,
+         lng = as.numeric(gsub('.*[EW]([0-9]+)', '\\1', GRD_ID)) * ifelse(gsub('.*([EW]).*', '\\1', GRD_ID) == 'W', -1, 1) / 100)
+
+populate_lines <- function(popl=pop, country=NULL, xdetail=2, ydetail=2){
+  if(is.null(country)) {
+    popl <- popl
+  } else {
+    popl <- filter(popl, CNTR_CODE==country)
+  }
+  popl %>%
+    filter(lng > 25, lng < 60) %>%
+    group_by(lat=round(lat*ydetail, 1)/ydetail, lng=round(lng*xdetail, 1)/xdetail) %>%
+    summarize(value = sum(TOT_P, na.rm=TRUE)) %>%
+    ungroup() %>%
+    complete(lat, lng)
+}
+```
+
+```{r revoplot, eval=FALSE, echo=FALSE}
+ggplot(populate_lines(country="DK", xdetail=4, ydetail=4),
+       aes(lng, lat + 3*(value/max(value, na.rm=TRUE)))) +
+  geom_line(size=0.4, alpha=0.8, color='#5A3E37', aes(group=lat), na.rm=TRUE) +
+  ggthemes::theme_map() + coord_equal(0.9)
+```
+
+```{r spatly, eval=FALSE, echo=FALSE}
+# http://spatial.ly/2017/04/population-lines-how-and-why-i-created-it/
+
+#create a range standardisation function
+range01 <- function(x){(x-min(x, na.rm=TRUE))/(max(x, na.rm=TRUE)-min(x, na.rm=TRUE))}
+
+# the plotting method used is quite iterative, so have to adjust expressions level
+options(expressions=20000)
+
+plot_poplines <- function(height=1.2, ratio=0.9, ...){
+  popl <- populate_lines(...)
+  values <- data_frame(pop=popl$value, x=popl$lng, y=popl$lat)
+  
+  # Rescale the values. This is to ensure that you can see the variation in the data
+  values$pop<-range01(values$pop) * height
+  
+  # Order to draw northern most lines first
+  values <- values[order(-values$y),]
+
+    # Create an empty plot called p
+  p <- ggplot()
+
+  # This loops through each line of latitude and produced a filled polygon that will mask out the lines beneath
+  # and then plots the paths on   top.The p object becomes a big ggplot2 plot.
+  for (i in unique(values$y))
+  {
+    p <- p + geom_ribbon(data=values[values$y==i,], aes(x, ymin=y, ymax=y+pop, group=y), fill="white", color="white", size=0.2) +
+      geom_line(data=values[values$y==i,], aes(x, pop+y), size=0.2, lineend="round")
+  }
+  
+  # show plot!
+  p + ggthemes::theme_map() + coord_equal(ratio)
+}
+```
+
+```{r dk, eval=FALSE, echo=FALSE}
+# Denmark
+plot_poplines(country="DK", xdetail=6, ydetail=4, height=1)
+```
+
+```{r eu, eval=FALSE, echo=FALSE}
+# Europe
+plot_poplines(xdetail=1, ydetail=0.5, height=3)
+```
+
+```{r uk, eval=FALSE, echo=FALSE}
+# United Kingdom
+plot_poplines(country="UK")
+```
+
+```{r de, eval=FALSE, echo=FALSE}
+# Germany
+plot_poplines(country="DE")
+```
