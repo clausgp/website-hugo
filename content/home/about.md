@@ -27,6 +27,11 @@ weight = 40
   course = "Machine Learning Specialization - Coursera Mooc"
   institution = "University of Washington"
   year = 2017
+  
+[[education.courses]]
+  course = "Data Scientist in R - DataCamp Mooc"
+  institution = "DataCamp"
+  year = 2017
 
 +++
 

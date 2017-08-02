@@ -26,16 +26,28 @@ view = 1
   tag = "*"
   
 [[filter]]
-  name = "Hofstede"
-  tag = ".hofstede"
-
-[[filter]]
   name = "Leaflet"
   tag = ".leaflet"
 
 [[filter]]
   name = "R"
   tag = ".r"
+
+[[filter]]
+  name = "Hofstede"
+  tag = ".hofstede"
+
+[[filter]]
+  name = "Immigration"
+  tag = ".immigration"
+  
+[[filter]]
+  name = "Network"
+  tag = ".network"
+
+[[filter]]
+  name = "Game of Thrones"
+  tag = ".game_of_thrones"
 
 
 +++

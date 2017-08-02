@@ -1,0 +1,183 @@
+---
+title: Facebooks prophet
+author: Claus Gaarde Pedersen
+date: '2017-07-23'
+slug: facebooks-prophet
+categories: []
+summary: Using dygraph and Facebooks prophet function to show development in Odenses real estate prices
+tags:
+  - R
+  - Timeseries
+header:
+  image: "headers/faceprophet.PNG"
+---
+
+## Prophesying Odenses real estate prices
+
+The purpose of this small study is try [Facebooks Prophet](https://facebookincubator.github.io/prophet/), which can be used for forecasting timeseries.  This spring they have open sourced it, so others can have a go at it. I also want to showoff [dygraphs](https://rstudio.github.io/dygraphs/), which is a javascript library for visualizing timeseries - interactively of course.  
+The data used will be real estate prices from the most important city in Denmark - Odense (the city where i live). The real estate prices comes from [Finans Danmark](http://finansdanmark.dk/rkr/) an association of danish banks and mortgage companies. The prices are only quarterly, so they are not the most obvious to see seasonal trends in the data, it would have been nicer with more time periods but there is not enough sales for that.  
+
+
+Setup including all the packages used.
+```{r setup, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo=TRUE, fig.width=8)
+library(dplyr)
+library(readr)
+library(tidyr)
+library(lubridate)
+library(purrr)
+library(ggplot2)
+library(stringi)
+library(xts)
+library(imputeTS)
+library(prophet)
+library(RColorBrewer)
+library(dygraphs)
+
+# reading csv from http://rkr.statistikbank.dk/201 tabel bm011
+bm011 <- read_csv2("faceprophet/dst_bm011_2017_07_23.csv", skip=3, col_names=FALSE,
+                   locale=locale(encoding="latin1"))
+```
+
+Kneading the data, to be easier to work with.
+
+```{r init}
+# csv is reading format with alot of text. that has to be cleaned
+bm011 <- bm011[-c(2:3),-c(1:2)]
+colnames(bm011) <- bm011[1,]
+colnames(bm011)[1] <- "postnr"
+bm011 <- bm011[-1,]
+dst_na <- bm011==".."
+bm011[dst_na] <- NA
+bm011[,-1] <- map_df(bm011[,-1], as.integer)
+
+# format postnr
+bm011$postnr <- stri_extract_last(bm011$postnr, regex="\\w+")
+
+# knead the data to the right shape
+gbm011 <- gather(bm011, yearm, price, -postnr)
+gbm011$date <- yq(gbm011$yearm) + months(3)
+gbm011$yearm <- NULL
+gbm011 <- spread(gbm011, postnr, price)
+# data is getting ready to be converted to timeseries
+head(gbm011)
+```
+
+Nice structure to convert to timeseris. But before that the missing values will be imputed. The impute method will be by moving average, which are fitting for a timeseries.  
+
+```{r impute}
+# wrap around imputTS::na.ma
+impute_ma <- function(df, ix, k=2, weighting="simple"){
+    df_imputed <- sapply(ix, function(x) na.ma(df[[x]], k=k, weighting=weighting)) %>%
+        round() %>% as.integer()
+    df_retur <- df
+    df_retur[ix] <- df_imputed
+    colnames(df_retur) <- colnames(df)
+    df_retur
+}
+# impute missing values with moving average
+gbm011 <- impute_ma(gbm011, c(2:ncol(gbm011)))
+
+# make timeseries object
+bm_xts <- xts(gbm011, order.by=gbm011$date)
+```
+
+Timeseries constructed, now it can just be thrown at dygraph for visualization.  
+
+```{r plot1}
+# plot prices
+dyg <- dygraph(bm_xts, main="Odense m2 prices for each postal area") %>%
+    dyHighlight(highlightSeriesOpts = list(strokeWidth = 3)) %>% 
+    dyLegend(width=720) %>% 
+    dyOptions(colors = brewer.pal(9, "Set1"), drawGrid=FALSE)
+    # %>% dyRangeSelector(fillColor="", strokeColor="")
+dyg
+```
+  
+Nice interactive graph where you can select to zoom in and hover. Its abit messy showing too many timelines at once. Normally around 3 timelines is the max to show in the same graph. But for completeness all postal areas for Odense will be shown. The hovering helps examining the individual postal codes.  
+When you look at the graphs, you can see the house bubble from around 2004 to 2007, where each postal district increased the average price by about 75%. After 2008 the prices havent really burst but rather been fluctuating with alot of variance, and each district also seem to be more spread apart.  
+
+Notice that normally you can add an interactive rangeselector, but this gets messed up in this hugo-website. Probably a .css battle going on in the background.  
+
+Next step is using Facebooks prophet function, to predict the coming changes.  
+
+```{r prophet, message=FALSE}
+# face prophesying
+
+it <- colnames(gbm011[,-1])
+# predictions for a single postal district
+prophesying <- function(x, df, datecol="date", preds=20, freq="quarter"){
+    df2 <- df[,c(datecol, x)]
+    colnames(df2) <- c("ds", "y")
+    m <- prophet(df2)
+    future <- make_future_dataframe(m, preds+1, freq=freq, include_history=FALSE)
+    forecast <- predict(m, future)
+    retur <- data_frame(forecast$ds, forecast$yhat)
+    colnames(retur) <- c(datecol, x)
+    retur
+}
+# applying predictions for all districts, have to use capture.output to prevent prophet spam. 
+dummy <- capture.output(prop_list <- map(it, prophesying, gbm011))
+prop_df <- reduce(prop_list, left_join, by="date")
+prop_df[,-1] <- map_df(prop_df[,-1], as.integer)
+
+# make timeseries object
+prop_df <- dplyr::union(gbm011, prop_df) %>% arrange(date)
+bm_prop_xts <- xts(prop_df, order.by=prop_df$date)
+```
+
+The prophet function, can only predict one timeseries at a time, so it cant incorporate dependencies among the postal district, which you would expect there to be for real estate prices, in neighboring districts.
+
+```{r plot2}
+# plot prices with prophet predictions for 5 years
+dyg <- dygraph(bm_prop_xts, main="Odense m2 prices for each postal area") %>%
+    dyHighlight(highlightSeriesOpts = list(strokeWidth = 3)) %>% 
+    dyLegend(width=720) %>% 
+    dyOptions(colors = brewer.pal(9, "Set1"), drawGrid=FALSE) %>% 
+    dyShading(from = gbm011$date[nrow(gbm011)], to = prop_df$date[nrow(prop_df)], color = "#CCEBD6")
+    # %>% dyRangeSelector(fillColor="", strokeColor="")
+dyg
+```
+  
+Above is the graph including the prophet predictions shown in green.  
+
+
+Next step is to show how the postal districts have spread from each other.  
+
+```{r}
+prop_d <- prop_df$date
+prop_m <- as.matrix(prop_df[,-1])
+prop_mean <- rowSums(prop_m)/ncol(prop_m)
+# adjusting each year
+prop_m2 <- prop_m/prop_mean
+prop_m2_c2 <- (prop_m2 - 1)^2
+prop_m2_var <- rowSums(prop_m2_c2)/ncol(prop_m2)
+prop_m2_sd <- prop_m2_var^0.5
+change2 <- data_frame(date=prop_d, sd=prop_m2_sd)
+
+# plot shows that the difference between the postal regions have increased, which is also clear from the earlier plots
+ggplot(change2, aes(x=date, y=sd)) + 
+    geom_line() +
+    geom_smooth(method="loess")
+```
+
+From the graph it seems that the spread between the postal districts starts to happen around the time the bubble starts. This can be explained by some of the districts reacting quicker to market changes. But that dosnt explain that the spread continues after bubble has faded out. That could be the object of another analysis.  
+
+Last step is to prettify the graph, by adjusting with a moving average to make the graphs more smooth.  
+
+```{r smooth}
+# smooth by using moving average
+prop_df_s <- prop_df
+prop_df_s[,-1] <- rollapplyr(prop_df_s[,-1], 4, mean, partial=TRUE)
+prop_df_s[,-1] <- map_df(prop_df_s[,-1], as.integer)
+bm_prop_xts_s <- xts(prop_df_s, order.by=prop_df_s$date)
+dyg <- dygraph(bm_prop_xts_s, main="Odense m2 prices for each postal area smoothed to yearly average") %>%
+    dyHighlight(highlightSeriesOpts = list(strokeWidth = 3)) %>% 
+    dyLegend(width=720) %>% 
+    dyOptions(colors = brewer.pal(9, "Set1"), drawGrid=FALSE) %>% 
+    dyShading(from = gbm011$date[nrow(gbm011)], to = prop_df$date[nrow(prop_df_s)], color = "#CCEBD6")
+    # %>% dyRangeSelector(fillColor="", strokeColor="")
+dyg
+```
+  
+This smoothed graph is much nicer and is easier to interpret.  
