@@ -4,7 +4,7 @@ author: Claus Gaarde Pedersen
 date: "29 apr 2017"
 slug: poplines
 categories: []
-summary: Population density shown as wiggly lines
+summary: Population density shown as wiggly lines. Best seen in chrome or it might be fugly.
 tags:
   - R
   - Population lines
